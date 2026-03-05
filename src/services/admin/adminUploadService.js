@@ -1,9 +1,9 @@
 // adminUploadService.js
-import api from "../api"
+import api from "./axiosInstance"
 
 export const uploadImage = (formData) =>
   api.post("/files/upload", formData, {
     headers: {
-      "Content-Type": "multipart/form-data"
+      // Let the browser set the Content-Type boundary for FormData
     }
   })
