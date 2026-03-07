@@ -12,7 +12,8 @@ export const createSubCategory = (data) => {
 
 // Get subcategory by ID
 export const getSubCategoryById = (id) => {
-  return api.get(`/subcategories/${id}/with-subcategories`);
+  // console.log("Fetching sub-category with ID:===============================", id);
+  return api.get(`/categories/${id}/with-subcategories`);
 };
 
 // Update subcategory

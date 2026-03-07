@@ -20,12 +20,12 @@ export const ProductsProvider = ({ children }) => {
         setTotalProducts(resProducts.totalElements || 0);
 
         const resActive = await getActiveProducts();
-        // console.log("Active Products Response:", resActive);
+        console.log("Active Products Response:", resActive);
         setActiveProducts(resActive.content || []);
 
         const resCategories = await getCategoriesAdmin();
         setTotalCategory(resCategories.totalElements || 0);
-        // console.log("Total Categories:", resCategories.totalElements);
+        console.log("Total Categories:", resCategories.totalElements);
       } catch (err) {
         console.error("ProductsContext fetch error:", err);
       } finally {

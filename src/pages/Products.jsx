@@ -56,7 +56,6 @@ const Products = () => {
     try {
       setLoading(true);
       const res = await getProducts();
-
       const productsArray = res.content.map((item) => {
         const product = item.data;
         const sku = product.skus?.[0] || {};

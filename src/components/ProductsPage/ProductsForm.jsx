@@ -17,26 +17,37 @@ import { getSubCategoryById } from "../../services/admin/adminSubCategoryService
 const ProductsFormStyled = ({ addDialogOpen, setAddDialogOpen }) => {
   const [newProduct, setNewProduct] = useState({
     name: "",
-    category: "",
-    sub_category_id: "",
     description: "",
-    skus: [{ sku: "", price: "", quantity: "" }],
+    skus: [
+      {
+        sku: "",
+        description: "",
+        price: "",
+        color: "",
+        size: "",
+        quantity: "",
+      },
+    ],
+    is_active: true,
+    sub_category_id: "",
   });
-  const [subCategories, setSubCategories] = useState([]);
+
   const [categories, setCategories] = useState([]);
+  const [subCategories, setSubCategories] = useState([]);
   const [posting, setPosting] = useState(false);
   const [postError, setPostError] = useState("");
-  // Category
+
+  // Fetch Categories
   useEffect(() => {
     if (!addDialogOpen) return;
+
     const fetchCategories = async () => {
       try {
         const res = await getCategoriesAdmin();
         const categoryList = Array.isArray(res.content)
           ? res.content.map((item) => item.data)
           : [];
-        console.log("ID", categoryList.map((cat) => cat.id)),
-          setCategories(categoryList);
+        setCategories(categoryList);
       } catch (err) {
         console.error(err);
       }
@@ -44,28 +55,26 @@ const ProductsFormStyled = ({ addDialogOpen, setAddDialogOpen }) => {
     fetchCategories();
   }, [addDialogOpen]);
 
-  // Sub-Category
+  // Fetch Sub-Categories
   useEffect(() => {
     if (!newProduct.category) {
       setSubCategories([]);
-      console.log("No category selected, skipping fetch");
       return;
     }
 
     const fetchSubCategories = async () => {
       try {
-        const categoryId = Number(newProduct.category); // convert string -> number
+        const categoryId = Number(newProduct.category);
         const res = await getSubCategoryById(categoryId);
-
-        // Access correct path
-        const subCatList = Array.isArray(res.data.data.subCategories)
-          ? res.data.data.subCategories
+        const subCatList = Array.isArray(res.data.subCategories)
+          ? res.data.subCategories.map((item) => ({
+            id: item.data.id,
+            name: item.data.name,
+          }))
           : [];
-
-        console.log("Fetched sub-categories:", subCatList);
         setSubCategories(subCatList);
       } catch (err) {
-        console.error("Fetch sub-category error:", err);
+        console.error(err);
         setSubCategories([]);
       }
     };
@@ -73,29 +82,60 @@ const ProductsFormStyled = ({ addDialogOpen, setAddDialogOpen }) => {
     fetchSubCategories();
   }, [newProduct.category]);
 
+  // Handle SKU changes
+  const handleSkuChange = (field, value) => {
+    const updatedSkus = [...newProduct.skus];
+    updatedSkus[0] = { ...updatedSkus[0], [field]: value };
+    setNewProduct({ ...newProduct, skus: updatedSkus });
+  };
+
+  // Submit Product
   const handleAddProductSubmit = async () => {
     setPosting(true);
     setPostError("");
+
     try {
-      await api.post("/products", {
-        name: newProduct.name,
-        description: newProduct.description,
+      // const payload = {
+      //   name: newProduct.name,
+      //   description: newProduct.description,
+      //   sub_category_id: Number(newProduct.sub_category_id),
+      //   is_active: true,
+      //   skus: newProduct.skus.map((sku) => ({
+      //     sku: sku.sku,
+      //     description: sku.description || sku.sku,
+      //     price: Number(sku.price),
+      //     quantity: Number(sku.quantity),
+      //     color: sku.color,
+      //     size: sku.size,
+      //   })),
+      // };
+      const payload = {
+        ...newProduct,
         sub_category_id: Number(newProduct.sub_category_id),
         skus: newProduct.skus.map((sku) => ({
           sku: sku.sku,
+          description: sku.description || sku.sku,
           price: Number(sku.price),
+          color: sku.color,
+          size: sku.size,
           quantity: Number(sku.quantity),
-          description: sku.sku,
         })),
-        is_active: true,
-      });
+      };
+
+      await api.post("/products", payload);
+
+      console.log("POST DATA:", payload);
+
+      await api.post("/products", payload);
+
       setNewProduct({
         name: "",
         category: "",
         sub_category_id: "",
         description: "",
-        skus: [{ sku: "", price: "", quantity: "" }],
+        skus: [{ sku: "", description: "", price: "", quantity: "", color: "", size: "" }],
       });
+
       setAddDialogOpen(false);
       alert("Product added successfully!");
     } catch (err) {
@@ -106,7 +146,7 @@ const ProductsFormStyled = ({ addDialogOpen, setAddDialogOpen }) => {
     }
   };
 
-  // Input styling like registration form in the image
+  // Input styling
   const inputClass =
     "w-full px-4 py-3 rounded-lg border border-gray-300 bg-white focus:border-purple-600 focus:ring-2 focus:ring-purple-200 outline-none transition-all duration-200 text-gray-700 placeholder-gray-400";
   const labelClass = "block text-sm font-medium text-gray-600 mb-1";
@@ -122,9 +162,7 @@ const ProductsFormStyled = ({ addDialogOpen, setAddDialogOpen }) => {
                 <Package size={20} />
               </div>
               <div>
-                <DialogTitle className="text-xl font-bold text-white">
-                  New Product
-                </DialogTitle>
+                <DialogTitle className="text-xl font-bold text-white">New Product</DialogTitle>
                 <DialogDescription className="text-purple-200 text-sm">
                   Enter product details below.
                 </DialogDescription>
@@ -134,50 +172,39 @@ const ProductsFormStyled = ({ addDialogOpen, setAddDialogOpen }) => {
         </div>
 
         {/* Form */}
-        <div className="px-6 py-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
+        <div className="px-4 py-4 max-h-[70vh] overflow-y-auto custom-scrollbar bg-white">
           <form
             id="product-form"
             onSubmit={(e) => {
               e.preventDefault();
               handleAddProductSubmit();
             }}
-            className="space-y-5"
+            className="space-y-3 text-black"
           >
             {/* Product Name */}
             <div>
               <label className={labelClass}>Product Name</label>
               <input
                 type="text"
-                placeholder="Wireless Headphones"
+                placeholder="e.g. Wireless Headphones"
                 value={newProduct.name}
-                onChange={(e) =>
-                  setNewProduct({ ...newProduct, name: e.target.value })
-                }
+                onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
                 className={inputClass}
                 required
               />
             </div>
 
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Categories */}
+            {/* Category & Subcategory */}
+            <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className={labelClass}>Category</label>
                 <select
                   value={newProduct.category}
-                  onChange={(e) => {
-                    console.log("Selected category ID:", e.target.value, typeof e.target.value);
-                    // console.log("Selected category ID:", e.target.value); //
-                    setNewProduct({
-                      ...newProduct,
-                      category: e.target.value,
-                      sub_category_id: "", // reset sub-category
-                    });
-                  }}
-                  className={`${inputClass} appearance-none cursor-pointer`}
+                  onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value, sub_category_id: "" })}
+                  className={inputClass}
                   required
                 >
-                  <option value="">Select Category</option>
+                  <option value="">Select...</option>
                   {categories.map((cat) => (
                     <option key={cat.id} value={cat.id}>
                       {cat.name}
@@ -185,25 +212,17 @@ const ProductsFormStyled = ({ addDialogOpen, setAddDialogOpen }) => {
                   ))}
                 </select>
               </div>
-              {/* Sub Category */}
+
               <div>
                 <label className={labelClass}>Sub-Category</label>
                 <select
                   value={newProduct.sub_category_id}
-                  onChange={(e) =>
-                    setNewProduct({
-                      ...newProduct,
-                      sub_category_id: e.target.value,
-                    })
-                  }
-                  className={`${inputClass} appearance-none cursor-pointer`}
+                  onChange={(e) => setNewProduct({ ...newProduct, sub_category_id: e.target.value })}
+                  className={inputClass}
                   required
                   disabled={!subCategories.length}
                 >
-                  <option value="">
-                    {subCategories.length ? "Select Sub-Category" : "No sub-categories"}
-                  </option>
-
+                  <option value="">{subCategories.length ? "Select..." : "N/A"}</option>
                   {subCategories.map((sub) => (
                     <option key={sub.id} value={sub.id}>
                       {sub.name}
@@ -211,7 +230,81 @@ const ProductsFormStyled = ({ addDialogOpen, setAddDialogOpen }) => {
                   ))}
                 </select>
               </div>
+            </div>
 
+            {/* SKU, Price, Qty */}
+            <div className="grid grid-cols-12 gap-3">
+              <div className="col-span-6">
+                <label className={labelClass}>SKU</label>
+                <input
+                  type="text"
+                  placeholder="SKU-123"
+                  value={newProduct.skus[0].sku}
+                  onChange={(e) => handleSkuChange("sku", e.target.value)}
+                  className={inputClass}
+                  required
+                />
+              </div>
+
+              <div className="col-span-3">
+                <label className={labelClass}>Price</label>
+                <input
+                  type="number"
+                  placeholder="0.00"
+                  min="0.00"
+                  step="0.01"
+                  value={newProduct.skus[0].price}
+                  onChange={(e) => handleSkuChange("price", e.target.value)}
+                  className={inputClass}
+                  required
+                />
+              </div>
+
+              <div className="col-span-3">
+                <label className={labelClass}>Qty</label>
+                <input
+                  type="number"
+                  placeholder="0"
+                  min="1"
+                  value={newProduct.skus[0].quantity}
+                  onChange={(e) => handleSkuChange("quantity", e.target.value)}
+                  className={inputClass}
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Color & Size */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelClass}>Color</label>
+                <select
+                  value={newProduct.skus[0].color}
+                  onChange={(e) => handleSkuChange("color", e.target.value)}
+                  className={inputClass}
+                  required
+                >
+                  <option value="">Select Color</option>
+                  <option value="Black">Black</option>
+                  <option value="White">White</option>
+                  <option value="Red">Red</option>
+                  <option value="Blue">Blue</option>
+                  <option value="Green">Green</option>
+                  <option value="Yellow">Yellow</option>
+                  <option value="Purple">Purple</option>
+                </select>
+              </div>
+              <div>
+                <label className={labelClass}>Size</label>
+                <input
+                  type="text"
+                  placeholder="e.g. M"
+                  value={newProduct.skus[0].size}
+                  onChange={(e) => handleSkuChange("size", e.target.value)}
+                  className={inputClass}
+                  required
+                />
+              </div>
             </div>
 
             {/* Description */}
@@ -219,50 +312,13 @@ const ProductsFormStyled = ({ addDialogOpen, setAddDialogOpen }) => {
               <label className={labelClass}>Description</label>
               <textarea
                 value={newProduct.description}
-                onChange={(e) =>
-                  setNewProduct({ ...newProduct, description: e.target.value })
-                }
+                onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
                 placeholder="Enter product details..."
-                className={`${inputClass} min-h-[100px] resize-none`}
+                className={inputClass + " min-h-[80px] resize-none"}
               />
             </div>
 
-            {/* SKU */}
-            <div className="flex gap-3">
-              <input
-                type="text"
-                placeholder="SKU"
-                value={newProduct.skus[0].sku}
-                onChange={(e) => handleSkuChange("sku", e.target.value)}
-                className="flex-1 px-3 py-3 rounded-lg border border-gray-300 focus:border-purple-600 focus:ring-2 focus:ring-purple-200 outline-none"
-                required
-              />
-              <input
-                type="number"
-                placeholder="Price"
-                min="0"
-                step="0.01"
-                value={newProduct.skus[0].price}
-                onChange={(e) => handleSkuChange("price", e.target.value)}
-                className="w-24 px-3 py-3 rounded-lg border border-gray-300 focus:border-purple-600 focus:ring-2 focus:ring-purple-200 outline-none"
-                required
-              />
-              <input
-                type="number"
-                placeholder="Qty"
-                min="0"
-                value={newProduct.skus[0].quantity}
-                onChange={(e) => handleSkuChange("quantity", e.target.value)}
-                className="w-20 px-3 py-3 rounded-lg border border-gray-300 focus:border-purple-600 focus:ring-2 focus:ring-purple-200 outline-none"
-                required
-              />
-            </div>
-
-            {postError && (
-              <div className="p-2 text-red-600 bg-red-50 rounded-md text-sm">
-                {postError}
-              </div>
-            )}
+            {postError && <div className="p-2 text-red-600 bg-red-50 border border-red-100 rounded text-xs">{postError}</div>}
           </form>
         </div>
 
@@ -281,11 +337,7 @@ const ProductsFormStyled = ({ addDialogOpen, setAddDialogOpen }) => {
             disabled={posting}
             className="flex items-center gap-2 px-5 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700"
           >
-            {posting ? (
-              <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            ) : (
-              <Save size={16} />
-            )}
+            {posting ? <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save size={16} />}
             {posting ? "Saving..." : "Create"}
           </button>
         </DialogFooter>
