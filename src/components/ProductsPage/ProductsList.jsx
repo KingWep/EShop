@@ -12,6 +12,7 @@ export default function ProductsList({
   statusLabel,
   handleToggleStatus,
   handleDeleteClick,
+  handleEditClick,
 }) {
   return (
     <div className="space-y-5 animate-fade-up">
@@ -76,7 +77,7 @@ export default function ProductsList({
                       </span>
                     </td>
                     <td className="px-5 py-4 flex items-center gap-1">
-                      <button onClick={() => handleToggleStatus(product.id, product.status)}>
+                      <button onClick={() => handleEditClick(product)} title="Edit product">
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button onClick={() => handleDeleteClick(product.id)}>

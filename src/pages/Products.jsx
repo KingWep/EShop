@@ -9,6 +9,7 @@ import {
 
 import ProductsList from "../components/ProductsPage/ProductsList";
 import ProductsForm from "../components/ProductsPage/ProductsForm";
+import ProductsEditForm from "../components/ProductsPage/ProductsEditForm";
 import ProductsPagination from "../components/ProductsPage/ProductsPagination";
 
 const statusLabel = {
@@ -30,6 +31,10 @@ const Products = () => {
   // Delete Dialog
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
+
+  // Edit Dialog
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [productToEdit, setProductToEdit] = useState(null);
 
   // Add Product Dialog
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -63,10 +68,18 @@ const Products = () => {
         return {
           id: product.id,
           name: product.name,
+          description: product.description || "",
           sku: sku.sku || "N/A",
           category: product.sub_category?.data?.category_name || "N/A",
+          categoryId: product.sub_category?.data?.category_id || "",
+          sub_category_id: product.sub_category?.data?.id || "",
           price: sku.price ? `$${sku.price}` : "$0",
+          rawPrice: sku.price || "",
           stock: sku.quantity || 0,
+          skuDescription: sku.description || "",
+          color: sku.color || "",
+          size: sku.size || "",
+          is_active: product.is_active,
           status: product.is_active
             ? sku.quantity === 0
               ? "out-of-stock"
@@ -114,6 +127,14 @@ const Products = () => {
     } catch (err) {
       console.error("Failed to delete product:", err);
     }
+  };
+
+  // ================================
+  // EDIT PRODUCT
+  // ================================
+  const handleEditClick = (product) => {
+    setProductToEdit(product);
+    setEditDialogOpen(true);
   };
 
   // ================================
@@ -181,6 +202,7 @@ const Products = () => {
         statusLabel={statusLabel}
         handleToggleStatus={handleToggleStatus}
         handleDeleteClick={handleDeleteClick}
+        handleEditClick={handleEditClick}
         deleteDialogOpen={deleteDialogOpen}
         setDeleteDialogOpen={setDeleteDialogOpen}
         handleConfirmDelete={handleConfirmDelete}
@@ -203,6 +225,14 @@ const Products = () => {
         posting={posting}
         postError={postError}
         handleAddProductSubmit={() => {}}
+      />
+
+      {/* Edit Product Form */}
+      <ProductsEditForm
+        editDialogOpen={editDialogOpen}
+        setEditDialogOpen={setEditDialogOpen}
+        productToEdit={productToEdit}
+        onSuccess={fetchProducts}
       />
     </div>
   );
