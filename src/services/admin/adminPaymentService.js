@@ -1,5 +1,5 @@
 // adminPaymentService.js
-import api from "../api"
+import api from "./axiosInstance"
 
 // Get payment by order
 export const getPaymentByOrder = (orderId) =>

@@ -1,5 +1,5 @@
 // adminOrderService.js
-import api from "../api"
+import api from "./axiosInstance"
 
 export const getAllOrders = () =>
   api.get("/orders")
