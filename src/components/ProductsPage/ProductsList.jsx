@@ -44,7 +44,7 @@ export default function ProductsList({
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-secondary/30">
-                {["ID", "Name", "SKU", "Category", "Price", "Stock", "Status","Actions"].map((h) => (
+                {["ID", "Name", "SKU", "Price", "Stock", "Status","Actions"].map((h) => (
                   <th key={h} className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap">
                     {h}
                   </th>
@@ -67,7 +67,6 @@ export default function ProductsList({
                       {product.name}
                     </td>
                     <td className="px-5 py-4 font-mono text-xs text-muted-foreground">{product.sku}</td>
-                    <td className="px-5 py-4">{product.category}</td>
                     <td className="px-5 py-4 font-semibold">{product.price}</td>
                     <td className="px-5 py-4">{product.stock}</td>
                     <td className="px-5 py-4">

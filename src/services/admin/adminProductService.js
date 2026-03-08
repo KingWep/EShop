@@ -1,7 +1,20 @@
 import axiosInstance from "./axiosInstance";
 
-// Get all products
-export const getProducts = () => axiosInstance.get("/products");
+// Get products (supports optional server-side pagination)
+export const getProducts = (page, size) => {
+  const params = new URLSearchParams();
+
+  if (Number.isInteger(page) && page >= 0) {
+    params.set("page", String(page));
+  }
+
+  if (Number.isInteger(size) && size > 0) {
+    params.set("size", String(size));
+  }
+
+  const query = params.toString();
+  return axiosInstance.get(query ? `/products?${query}` : "/products");
+};
 
 // Get product by ID
 export const getProduct = (id) => axiosInstance.get(`/products/${id}`);
@@ -31,8 +44,21 @@ export const createProduct = (data) => axiosInstance.post("/products", data);
 export const updateProduct = (id, data) => axiosInstance.put(`/products/${id}`, data);
 
 // Add image to product
-export const addProductImage = (id, formData) =>
-  axiosInstance.post(`/products/${id}/image`, formData);
+// Some backends expect multipart key `image`, others `file`.
+export const addProductImage = async (id, file) => {
+  const withImageKey = new FormData();
+  withImageKey.append("image", file);
+
+  try {
+    return await axiosInstance.post(`/products/${id}/image`, withImageKey);
+  } catch (err) {
+    if (err?.status !== 400) throw err;
+  }
+
+  const withFileKey = new FormData();
+  withFileKey.append("file", file);
+  return axiosInstance.post(`/products/${id}/image`, withFileKey);
+};
 
 // Delete product
 export const deleteProduct = (id) => axiosInstance.delete(`/products/${id}`);
