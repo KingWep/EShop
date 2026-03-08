@@ -1,7 +1,8 @@
 import axiosInstance from "./axiosInstance";
 
-// Get all products
-export const getProducts = () => axiosInstance.get("/products");
+// Get all products (optionally paged)
+export const getProducts = (page = 0, size = 10) =>
+  axiosInstance.get(`/products?page=${page}&size=${size}`);
 
 // Get product by ID
 export const getProduct = (id) => axiosInstance.get(`/products/${id}`);
@@ -33,7 +34,6 @@ export const updateProduct = (id, data) => axiosInstance.put(`/products/${id}`, 
 // Add image to product
 export const addProductImage = (id, formData) =>
   axiosInstance.post(`/products/${id}/image`, formData);
-
 // Delete product
 export const deleteProduct = (id) => axiosInstance.delete(`/products/${id}`);
 

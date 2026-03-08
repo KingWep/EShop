@@ -4,7 +4,9 @@ async function request(path, { method = 'GET', body, headers = {} } = {}) {
   const url = `${BASE_URL}${path}`;
   const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
   const defaultHeaders = isFormData ? {} : { 'Content-Type': 'application/json' };
-  const finalHeaders = { ...defaultHeaders, ...(headers || {}) };
+  const token = localStorage.getItem('token');
+  const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
+  const finalHeaders = { ...defaultHeaders, ...authHeader, ...(headers || {}) };
 
   const opts = { method, headers: finalHeaders };
   if (body !== undefined) {
@@ -21,6 +23,11 @@ async function request(path, { method = 'GET', body, headers = {} } = {}) {
   }
 
   if (!res.ok) {
+    if (res.status === 401) {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+      return;
+    }
     const err = new Error(res.statusText || 'Request failed');
     err.status = res.status;
     err.data = data;

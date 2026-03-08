@@ -3,7 +3,6 @@ import { Edit2, Trash2 } from "../icons";
 
 export default function ProductsList({
   products,
-  filtered,
   loading,
   search,
   setSearch,
@@ -60,7 +59,7 @@ export default function ProductsList({
                   </td>
                 </tr>
               ) : (
-                filtered.map((product) => (
+                products.map((product) => (
                   <tr key={product.id} className="table-row-hover">
                     <td className="px-5 py-4">{product.id}</td>
                     <td className="px-5 py-4 font-medium flex gap-2 items-center">

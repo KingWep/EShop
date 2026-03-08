@@ -26,7 +26,8 @@ const Products = () => {
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8;
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 10;
 
   // Delete Dialog
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -38,33 +39,18 @@ const Products = () => {
 
   // Add Product Dialog
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [newProduct, setNewProduct] = useState({
-    name: "",
-    category: "",
-    sku: "", 
-    stock: "",
-    price: "", 
-    quantity: "",
-    description: "",
-    
-   
-   
-   
-  });
-  const [posting, setPosting] = useState(false);
-  const [postError, setPostError] = useState("");
 
   // ================================
-  // FETCH PRODUCTS
+  // FETCH PRODUCTS (server-side paged)
   // ================================
-  const fetchProducts = async () => {
+  const fetchProducts = async (page = currentPage) => {
     try {
       setLoading(true);
-      const res = await getProducts();
-      const productsArray = res.content.map((item) => {
+      // API is 0-indexed, UI is 1-indexed
+      const res = await getProducts(page - 1, itemsPerPage);
+      const productsArray = (res.content || []).map((item) => {
         const product = item.data;
         const sku = product.skus?.[0] || {};
-
         return {
           id: product.id,
           name: product.name,
@@ -90,20 +76,21 @@ const Products = () => {
           image: product.main_image || "📦",
         };
       });
-
       setProducts(productsArray);
-      setLoading(false);
+      setTotalPages(res.totalPages || Math.ceil((res.totalElements || 0) / itemsPerPage) || 1);
     } catch (err) {
       console.error("Failed to fetch products:", err);
+    } finally {
       setLoading(false);
     }
   };
 
+  // Fetch when page changes
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    fetchProducts(currentPage);
+  }, [currentPage]);
 
-  // Reset page when search/filter changes
+  // Reset to page 1 when search/filter changes
   useEffect(() => {
     setCurrentPage(1);
   }, [search, filter]);
@@ -118,12 +105,11 @@ const Products = () => {
 
   const handleConfirmDelete = async () => {
     if (!productToDelete) return;
-
     try {
       await deleteProduct(productToDelete);
       setDeleteDialogOpen(false);
       setProductToDelete(null);
-      fetchProducts();
+      fetchProducts(currentPage);
     } catch (err) {
       console.error("Failed to delete product:", err);
     }
@@ -142,38 +128,24 @@ const Products = () => {
   // ================================
   const handleToggleStatus = async (id, currentStatus) => {
     try {
-      const newStatus =
-        currentStatus === "in-stock" ? "out-of-stock" : "in-stock";
-
+      const newStatus = currentStatus === "in-stock" ? "out-of-stock" : "in-stock";
       await updateProductStatus(id, newStatus);
-      fetchProducts();
+      fetchProducts(currentPage);
     } catch (err) {
       console.error("Failed to update product status:", err);
     }
   };
 
   // ================================
-  // FILTER
+  // CLIENT-SIDE FILTER (on current page)
   // ================================
   const filtered = products.filter((p) => {
     const matchSearch =
       p.name.toLowerCase().includes(search.toLowerCase()) ||
       p.sku.toLowerCase().includes(search.toLowerCase());
-
     const matchFilter = filter === "all" || p.status === filter;
-
     return matchSearch && matchFilter;
   });
-
-  // ================================
-  // PAGINATION
-  // ================================
-  const totalPages = Math.ceil(filtered.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedProducts = filtered.slice(
-    startIndex,
-    startIndex + itemsPerPage
-  );
 
   return (
     <div className="space-y-5 animate-fade-up">
@@ -192,13 +164,12 @@ const Products = () => {
 
       {/* Products List */}
       <ProductsList
-        products={paginatedProducts}
+        products={filtered}
         loading={loading}
         search={search}
         setSearch={setSearch}
         filter={filter}
         setFilter={setFilter}
-        filtered={filtered}
         statusLabel={statusLabel}
         handleToggleStatus={handleToggleStatus}
         handleDeleteClick={handleDeleteClick}
@@ -220,11 +191,7 @@ const Products = () => {
       <ProductsForm
         addDialogOpen={addDialogOpen}
         setAddDialogOpen={setAddDialogOpen}
-        newProduct={newProduct}
-        setNewProduct={setNewProduct}
-        posting={posting}
-        postError={postError}
-        handleAddProductSubmit={() => {}}
+        onProductAdded={() => fetchProducts(currentPage)}
       />
 
       {/* Edit Product Form */}
