@@ -10,11 +10,11 @@ import {
 } from "../layouts/ui/dialog";
 import { Package, Save, X } from "lucide-react";
 
-import api from "../../services/admin/axiosInstance";
+import { createProduct } from "../../services/admin/adminProductService";
 import { getCategoriesAdmin } from "../../services/admin/adminCategoryService";
 import { getSubCategoryById } from "../../services/admin/adminSubCategoryService";
 
-const ProductsFormStyled = ({ addDialogOpen, setAddDialogOpen }) => {
+const ProductsFormStyled = ({ addDialogOpen, setAddDialogOpen, onProductAdded }) => {
   const [newProduct, setNewProduct] = useState({
     name: "",
     description: "",
@@ -95,23 +95,11 @@ const ProductsFormStyled = ({ addDialogOpen, setAddDialogOpen }) => {
     setPostError("");
 
     try {
-      // const payload = {
-      //   name: newProduct.name,
-      //   description: newProduct.description,
-      //   sub_category_id: Number(newProduct.sub_category_id),
-      //   is_active: true,
-      //   skus: newProduct.skus.map((sku) => ({
-      //     sku: sku.sku,
-      //     description: sku.description || sku.sku,
-      //     price: Number(sku.price),
-      //     quantity: Number(sku.quantity),
-      //     color: sku.color,
-      //     size: sku.size,
-      //   })),
-      // };
       const payload = {
-        ...newProduct,
+        name: newProduct.name,
+        description: newProduct.description,
         sub_category_id: Number(newProduct.sub_category_id),
+        is_active: true,
         skus: newProduct.skus.map((sku) => ({
           sku: sku.sku,
           description: sku.description || sku.sku,
@@ -122,25 +110,22 @@ const ProductsFormStyled = ({ addDialogOpen, setAddDialogOpen }) => {
         })),
       };
 
-      await api.post("/products", payload);
-
-      console.log("POST DATA:", payload);
-
-      await api.post("/products", payload);
+      await createProduct(payload);
 
       setNewProduct({
         name: "",
+        description: "",
         category: "",
         sub_category_id: "",
-        description: "",
+        is_active: true,
         skus: [{ sku: "", description: "", price: "", quantity: "", color: "", size: "" }],
       });
 
       setAddDialogOpen(false);
-      alert("Product added successfully!");
+      if (onProductAdded) onProductAdded();
     } catch (err) {
       console.error(err);
-      setPostError(err.response?.data?.message || "Failed to add product");
+      setPostError(err.data?.message || err.message || "Failed to add product");
     } finally {
       setPosting(false);
     }
