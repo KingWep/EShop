@@ -119,7 +119,7 @@ const ProductsFormStyled = ({ addDialogOpen, setAddDialogOpen, onProductAdded })
       <DialogContent className="w-[80vw] max-w-xl p-0 overflow-hidden rounded-3xl border border-purple-500/20 bg-[#0f0a1e] shadow-[0_0_60px_rgba(139,92,246,0.15)]">
 
         {/* Header */}
-        <div className="relative px-7 pt-7 pb-6 overflow-hidden">
+        <div className="relative overflow-hidden">
           {/* Glow orb */}
           <div className="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-purple-600/20 blur-3xl pointer-events-none" />
           <div className="absolute -top-6 left-1/2 h-px w-3/4 -translate-x-1/2 bg-gradient-to-r from-transparent via-purple-500/40 to-transparent" />
